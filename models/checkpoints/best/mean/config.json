@@ -1,0 +1,20 @@
+{
+    "config": {
+        "user_model_name": "mean",
+        "learning_rate": 0.05,
+        "embedding_dim": 128,
+        "history_length": 20,
+        "batch_size": 1024,
+        "max_epochs": 100,
+        "patience": 3,
+        "seed": 42
+    },
+    "selection": {
+        "best_epoch": 3,
+        "best_val_top10": 0.0609535314142704,
+        "best_val_loss": 4415.78955078125,
+        "epochs_trained": 6
+    },
+    "checkpoint": "best.weights.h5",
+    "original_checkpoint": "checkpoints/sweep_runs/mean_lr0.05_d128_h20_seed42.weights.h5"
+}
