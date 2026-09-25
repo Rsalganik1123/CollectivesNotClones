@@ -1,5 +1,5 @@
 
-This code contains three concrete components which make up the empricial section of our paper: (1) Bot Farm experiments (2) Synthetic Collective Action experiments, and (3) Real Collective Action experiments (which consist of the ALS and more general Two Tower (TT) frameworks). 
+This code contains three concrete components which make up the empricial section of our paper: (1) Bot Farm experiments (2) Synthetic Collective Action experiments, and (3) Real Collective Action experiments (which consist of the ALS framework). 
 
 # Codebase overview 
 * data: basically just meant to contain MovieLens100K
@@ -21,7 +21,9 @@ This code contains three concrete components which make up the empricial section
     - TT_utils: just helpers that are specific to the tf implementation of our user models
     - world: in order to make our strategic action pipeline compatible with both synthetic and real experiments, we store a bunch of information in params which remain frozen throughout all the runs. If you want to change things like the target item, etc. then you can modify the code here directly. 
 * synthetic 
-    - TBD after clean. 
+    - cohesion - helpes enforce cohesion for synthetic experiments 
+    - optimal solvers -- solves for the best direction 
+    - world - holds parameters for expereiments 
 * paths: change dataset directory here. 
 
 
