@@ -45,5 +45,5 @@ Our synthetic CA results can be reproduced by running ```synthetic_ALS_CA.py```.
 Crucially, the difference between (2)/(3) or the Synthetic/Real setups is *where the ratings are coming from*. In the Synthetic setup we generate a distribution over user and item representations and then *back-engineer* the baseline ratings that would have yielded this kind of initial representation set. Meanwhile, in the Real setup we load the MovieLens100K dataset ratings and use these as our baseline ratings. 
 
 ## ALS 
-TBD after full clean  
+To run the real code on the MovieLens you can launch using ```real_ALS_CA.py```
 
