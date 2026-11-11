@@ -111,6 +111,7 @@ def apply_strategic_action_to_ratings(
     coordinated_latents,
     baseline_item_factors,
     strategic_items,
+    strategy,
 ):
     """
     Preserve historical behavior and add the pre-selected
@@ -145,15 +146,16 @@ def apply_strategic_action_to_ratings(
             params.rating_max,
         )
 
-        # Explicit collective objective:
-        # maximally support the target.
-        target_position = np.flatnonzero(
-            strategic_items == params.target_item
-        )
+        if strategy != 'random_filler_no_target_item': 
+            # Explicit collective objective:
+            # maximally support the target.
+            target_position = np.flatnonzero(
+                strategic_items == params.target_item
+            )
 
-        strategic_ratings[
-            target_position[0]
-        ] = params.rating_max
+            strategic_ratings[
+                target_position[0]
+            ] = params.rating_max
 
         #Add strategic behavior.
         for item_idx, rating in zip(

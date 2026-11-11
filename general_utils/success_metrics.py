@@ -79,6 +79,7 @@ def run_all_ALS_success_metrics(population_mean, v_target_theory, v_target_pre_t
     # both users and items are allowed to move.
     # ========================================================
 
+    
     score_pre = (
         baseline_U
         @ v_target_pre
@@ -95,7 +96,24 @@ def run_all_ALS_success_metrics(population_mean, v_target_theory, v_target_pre_t
             - score_pre
         )
     )
+    
+    
+    score_pre_noncoalition = (
+        baseline_U[noncoalition_mask]
+        @ v_target_pre
+    )
 
+    score_post_noncoalition = (
+        post_U[noncoalition_mask]
+        @ v_target_post
+    )
+    empirical_success_noncoalition = float(
+        np.mean(
+            score_post_noncoalition
+            - score_pre_noncoalition
+        )
+    )
+    
     # ========================================================
     # 5. TOP-K EXPOSURE
     # ========================================================
@@ -159,6 +177,9 @@ def run_all_ALS_success_metrics(population_mean, v_target_theory, v_target_pre_t
 
         "empirical_success":
             empirical_success,
+        
+        "empirical_success_noncoalition": 
+            empirical_success_noncoalition,
 
         "topk_change":
             topk_change,

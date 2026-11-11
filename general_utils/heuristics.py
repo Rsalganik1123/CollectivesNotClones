@@ -55,13 +55,37 @@ def __find_target_item_clusters(
     return cluster_avg_interactions
 
 def generate_strategy_items_and_ratigns(params, rng, strategy, item_popularity, item_latents, user_latents, baseline_ratings, budget=10): 
-    if strategy == 'max_rating': 
+    if strategy == 'target_only': 
         strategy_items = np.array([
             params.target_item
         ])
         strategy_ratings = np.array([
             params.rating_max
         ])
+    if strategy == 'random_filler_no_target_item': 
+        candidate_items = np.delete(
+            np.arange(params.n_items),
+            params.target_item,
+        )
+
+        filler_items = rng.choice(
+            candidate_items,
+            size=budget,
+            replace=False,
+        )
+
+        # strategy_items = np.concatenate([
+        #     np.array([params.target_item]),
+        #     filler_items,
+        # ])
+        strategy_items = filler_items 
+
+        strategy_ratings = np.full(
+            budget,
+            params.rating_max,
+            dtype=float,
+        )
+        
     if strategy == 'random_filler':
         candidate_items = np.delete(
             np.arange(params.n_items),

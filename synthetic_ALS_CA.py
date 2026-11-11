@@ -7,7 +7,7 @@ from general_utils.reproducibility import _condition_seed
 from synthetic.world import SyntheticParams, SyntheticWorld
 from synthetic.cohesion import construct_users_with_dispersion
 from general_utils.ratings import generate_sparse_ratings
-from general_utils.CA_stats import coalition_moments, compute_dispersion, estimate_realized_coordination_and_cohesion
+from general_utils.CA_stats import collective_moments, compute_dispersion, estimate_realized_coordination_and_cohesion
 from models.ALS_model import fit_als
 from general_utils.heuristics import generate_strategy_items_and_ratigns, compute_strategy_vector
 from general_utils.CA_helpers import get_noncollective_mask
@@ -86,6 +86,7 @@ def evaluate_optimal_uc_empirically(
             baseline_item_factors=baseline_V,
             strategic_items=optimal_strategic_items,
             params=params,
+            strategy='optimal',
         )
     )
 
@@ -193,13 +194,13 @@ def evaluate_optimal_uc_empirically(
     ]
 
     realized_mean, realized_cov = (
-        coalition_moments(
+        collective_moments(
             realized_U_C
         )
     )
 
     desired_mean, desired_cov = (
-        coalition_moments(
+        collective_moments(
             desired_U_C
         )
     )
@@ -770,7 +771,7 @@ def run_theory_validation(
     (
         rating_implied_mean,
         rating_implied_cov,
-    ) = coalition_moments(
+    ) = collective_moments(
         rating_implied_U_C
     )
 
@@ -964,7 +965,7 @@ def run_theory_validation(
         initial_cov=c_cov_0,
         realized_mean=rating_implied_mean,
         realized_cov=rating_implied_cov,
-        coalition_vector=collective_vector,
+        collective_vector=collective_vector,
     )
     
     post_coordination =  estimate_realized_coordination_and_cohesion(
@@ -972,7 +973,7 @@ def run_theory_validation(
         initial_cov=c_cov_0,
         realized_mean=realized_mean,
         realized_cov=realized_cov,
-        coalition_vector=collective_vector,
+        collective_vector=collective_vector,
     )
 
     return {
@@ -1115,7 +1116,7 @@ def run_als_diagnostics(alignment_rotation, post_U, coalition_indices):
     ]
 
     realized_mean, realized_cov = (
-        coalition_moments(
+        collective_moments(
             realized_U_C
         )
     )
@@ -1167,7 +1168,7 @@ def collect_collective_stats(baseline_U, coalition_indices):
         coalition_indices
     ]
 
-    c_mean_0, c_cov_0 = coalition_moments(
+    c_mean_0, c_cov_0 = collective_moments(
         U_C_0
     )
 
@@ -1266,7 +1267,7 @@ def _run_strategy_on_shared_condition(
             )
             
             #basically this is \bar{u}_C^', \Sigma_C^'
-            c_mean_t, c_cov_t = coalition_moments(desired_U_C)
+            c_mean_t, c_cov_t = collective_moments(desired_U_C)
             
             # ================================================
             # 2. THEORY PREDICTIONS
@@ -1296,18 +1297,20 @@ def _run_strategy_on_shared_condition(
                     baseline_item_factors=baseline_V,
                     strategic_items=strategic_items,
                     params=world.params,
+                    strategy=strategy,
                 )
             )
 
             # Explicit target action required by theorem. (r_{cJ^*} = 5)
-            intervention_ratings = (
-                enforce_target_item_max_rating(
-                    ratings=intervention_ratings,
-                    coalition_indices=coalition_indices,
-                    target_item=target_item,
-                    target_rating=params.target_rating,
+            if strategy != 'random_filler_no_target_item': 
+                intervention_ratings = (
+                    enforce_target_item_max_rating(
+                        ratings=intervention_ratings,
+                        coalition_indices=coalition_indices,
+                        target_item=target_item,
+                        target_rating=params.target_rating,
+                    )
                 )
-            )
             
             # ================================================
             # 4. REFIT ALS
@@ -1502,9 +1505,15 @@ def _run_strategy_on_shared_condition(
                 
                 "exact_success": 
                     success_metrics['exact_success'], 
+                
+                "empirical_success_noncoalition": 
+                    success_metrics['empirical_success_noncoalition'],
                     
                 "topk_change": 
                     success_metrics['topk_change'],
+                
+                "topk_change_noncoalition":
+                    success_metrics['topk_change_noncoalition'],
                 
                 
                 # -------------------------
@@ -1634,16 +1643,18 @@ def _run_strategy_on_shared_condition(
 def launch_strategy_comparison(
     params, 
     seed,
-    budget_values=(5, 10, 15), 
+    budget_values=(10,), 
     strategies = (
         "mainstream_mimic",
         "target_neighborhood",
         "target_supporter_mimic",
         "random_filler", 
+        'random_filler_no_target_item',
+        'target_only',
     ),
-    alphas=(0.03, 0.05, 0.1, 0.3, 0.5, 0.7, 0.9),
-    p0_values=(0.0,0.3, 0.5, 0.7, 1.0),
-    beta_values=(0.0, 0.3, 0.5, 0.7, 1.0),
+    alphas=(0.03, 0.1, 0.3, 0.5, 0.7, 0.9),
+    p0_values=(0.0, 0.3, 0.5, 0.7, 1.0),
+    beta_values=(0.0, 0.5,  1.0),
     gamma_values=(0.0,0.5, 1.0),
 ): 
     #Generate synthetic world and draw env settings 
@@ -1659,129 +1670,132 @@ def launch_strategy_comparison(
 
 
     results = [] 
-    
-    for alpha_index, alpha in enumerate(tqdm(alphas)): 
-        #Calculate collective members 
-        coalition_indices = world.get_coalition_indices(coalition_order, alpha)
-        coalition_size = len(coalition_indices)
-        
-        #Initial Dispersion 
-        for p0_index, p0 in enumerate(p0_values): 
+    total = len(alphas) * len(p0_values) * len(strategies) * len(budget_values)
+    with tqdm(total=total, desc=f"seed {seed}") as pbar:
+        for alpha_index, alpha in enumerate(alphas): 
+            #Calculate collective members 
+            coalition_indices = world.get_coalition_indices(coalition_order, alpha)
+            coalition_size = len(coalition_indices)
             
-            condition_id = ( #this is just for bookkeeping 
-                f"seed={seed}|"
-                f"alpha={alpha}|"
-                f"p0={p0}"
-            )
-            
-            users_p0 = construct_users_with_dispersion(
-                true_users,
-                coalition_indices,
-                p0,
-            )
-            
-            #We want all the baseline runs to share a seed so that observed ratings set stays consistent irrespective of alpha
-            baseline_seed = _condition_seed(
-                seed=seed,
-                alpha_index=alpha_index,
-                p0_index=p0_index,
-                stream=101,
-            )
-
-            baseline_rng = np.random.default_rng(baseline_seed)
-            
-            #SIMULATE the baseline ratings that would have created our user/item representations  
-            baseline_ratings, observation_mask = (
-                generate_sparse_ratings(
-                    true_users=users_p0,
-                    true_items=true_items,
-                    item_popularity=item_popularity,
-                    rng=baseline_rng,
-                    params=world.params,
-                )
-            )
-            
-            #Fit the model to simulated ratings U, V
-            baseline_model, baseline_U, baseline_V = fit_als(
-                ratings=baseline_ratings,
-                version="baseline",
-                params=params,
-            )
-            
-            U_C_0, c_mean_0, c_cov_0, initial_dispersion, population_dispersion, normalized_initial_dispersion, population_mean = collect_collective_stats(baseline_U, coalition_indices)
-            
-            #We freeze target item for all runs 
-            target_item = int(
-                params.target_item
-            )
-            
-            # ALS solving for PRE strategic action
-            A, b = (
-                target_normal_equations_without_coalition(
-                    baseline_U=baseline_U,
-                    baseline_ratings=baseline_ratings,
-                    observation_mask=observation_mask,
-                    coalition_indices=coalition_indices,
-                    target_item=target_item,
-                    als_reg=params.als_reg,
-                )
-            )
-            
-            v_target_pre_theory = np.linalg.solve(A,b)
-            
-            strategy_seed = _condition_seed(
-                seed=seed,
-                alpha_index=alpha_index,
-                p0_index=p0_index,
-                stream=202,
-            )
-            
-            for strategy in strategies: 
-                strategy_rng = np.random.default_rng(strategy_seed)
+            #Initial Dispersion 
+            for p0_index, p0 in enumerate(p0_values): 
                 
-                for budget_index, budget in enumerate(
-                    budget_values
-                ):
-                    strategy_rows = (_run_strategy_on_shared_condition(
-                                            params,
-                                            world,
-                                            alpha,
-                                            p0,
-                                            strategy,
-                                            strategy_rng,
-                                            item_popularity,
-                                            baseline_ratings,
-                                            baseline_U,
-                                            baseline_V,
-                                            coalition_indices,
-                                            coalition_size,
-                                            U_C_0,
-                                            c_mean_0,
-                                            c_cov_0,
-                                            initial_dispersion,
-                                            population_dispersion,
-                                            normalized_initial_dispersion,
-                                            population_mean,
-                                            target_item,
-                                            A,
-                                            b,
-                                            v_target_pre_theory,
-                                            beta_values,
-                                            gamma_values, 
-                                            budget) 
-                        )
-                    results.extend(strategy_rows)
+                condition_id = ( #this is just for bookkeeping 
+                    f"seed={seed}|"
+                    f"alpha={alpha}|"
+                    f"p0={p0}"
+                )
+                
+                users_p0 = construct_users_with_dispersion(
+                    true_users,
+                    coalition_indices,
+                    p0,
+                )
+                
+                #We want all the baseline runs to share a seed so that observed ratings set stays consistent irrespective of alpha
+                baseline_seed = _condition_seed(
+                    seed=seed,
+                    alpha_index=alpha_index,
+                    p0_index=p0_index,
+                    stream=101,
+                )
 
-                # except Exception as exc:
-                    # ipdb.set_trace() 
-                    # print(
-                    #     f"seed={seed}, "
-                    #     f"alpha={alpha}, "
-                    #     f"p0={p0}, "
-                    #     f"strategy={strategy}: "
-                    #     f"FAILED: {exc}"
-                    # )
+                baseline_rng = np.random.default_rng(baseline_seed)
+                
+                #SIMULATE the baseline ratings that would have created our user/item representations  
+                baseline_ratings, observation_mask = (
+                    generate_sparse_ratings(
+                        true_users=users_p0,
+                        true_items=true_items,
+                        item_popularity=item_popularity,
+                        rng=baseline_rng,
+                        params=world.params,
+                    )
+                )
+                
+                #Fit the model to simulated ratings U, V
+                baseline_model, baseline_U, baseline_V = fit_als(
+                    ratings=baseline_ratings,
+                    version="baseline",
+                    params=params,
+                )
+                
+                U_C_0, c_mean_0, c_cov_0, initial_dispersion, population_dispersion, normalized_initial_dispersion, population_mean = collect_collective_stats(baseline_U, coalition_indices)
+                
+                #We freeze target item for all runs 
+                target_item = int(
+                    params.target_item
+                )
+                
+                # ALS solving for PRE strategic action
+                A, b = (
+                    target_normal_equations_without_coalition(
+                        baseline_U=baseline_U,
+                        baseline_ratings=baseline_ratings,
+                        observation_mask=observation_mask,
+                        coalition_indices=coalition_indices,
+                        target_item=target_item,
+                        als_reg=params.als_reg,
+                    )
+                )
+                
+                v_target_pre_theory = np.linalg.solve(A,b)
+                
+                strategy_seed = _condition_seed(
+                    seed=seed,
+                    alpha_index=alpha_index,
+                    p0_index=p0_index,
+                    stream=202,
+                )
+                
+                for strategy in strategies: 
+                    strategy_rng = np.random.default_rng(strategy_seed)
                     
+                    for budget_index, budget in enumerate(
+                        budget_values
+                    ):
+                        strategy_rows = (_run_strategy_on_shared_condition(
+                                                params,
+                                                world,
+                                                alpha,
+                                                p0,
+                                                strategy,
+                                                strategy_rng,
+                                                item_popularity,
+                                                baseline_ratings,
+                                                baseline_U,
+                                                baseline_V,
+                                                coalition_indices,
+                                                coalition_size,
+                                                U_C_0,
+                                                c_mean_0,
+                                                c_cov_0,
+                                                initial_dispersion,
+                                                population_dispersion,
+                                                normalized_initial_dispersion,
+                                                population_mean,
+                                                target_item,
+                                                A,
+                                                b,
+                                                v_target_pre_theory,
+                                                beta_values,
+                                                gamma_values, 
+                                                budget) 
+                            )
+                        results.extend(strategy_rows)
+                        pbar.update(1)
+                        pbar.set_postfix(alpha=alpha, p0=p0, strategy=strategy)
+
+                    # except Exception as exc:
+                        # ipdb.set_trace() 
+                        # print(
+                        #     f"seed={seed}, "
+                        #     f"alpha={alpha}, "
+                        #     f"p0={p0}, "
+                        #     f"strategy={strategy}: "
+                        #     f"FAILED: {exc}"
+                        # )
+    pbar.close()                    
     return pd.DataFrame(results)
             
 if __name__ == "__main__": 
@@ -1807,7 +1821,7 @@ if __name__ == "__main__":
     )
     
     output_path = (
-        "synthetic_ALS_CA_V4.csv"
+        "synthetic_ALS_CA_rebuttals.csv"
     )
 
     results.to_csv(
