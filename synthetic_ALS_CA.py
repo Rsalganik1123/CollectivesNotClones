@@ -1302,7 +1302,7 @@ def _run_strategy_on_shared_condition(
             )
 
             # Explicit target action required by theorem. (r_{cJ^*} = 5)
-            if strategy != 'random_filler_no_target_item': 
+            if 'no_target_item' not in strategy: 
                 intervention_ratings = (
                     enforce_target_item_max_rating(
                         ratings=intervention_ratings,
@@ -1651,6 +1651,7 @@ def launch_strategy_comparison(
         "random_filler", 
         'random_filler_no_target_item',
         'target_only',
+        'mainstream_mimic_no_target_item'
     ),
     alphas=(0.03, 0.1, 0.3, 0.5, 0.7, 0.9),
     p0_values=(0.0, 0.3, 0.5, 0.7, 1.0),

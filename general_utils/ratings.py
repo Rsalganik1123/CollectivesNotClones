@@ -146,7 +146,8 @@ def apply_strategic_action_to_ratings(
             params.rating_max,
         )
 
-        if strategy != 'random_filler_no_target_item': 
+        # if strategy != 'random_filler_no_target_item':
+        if 'no_target_item' not in strategy: 
             # Explicit collective objective:
             # maximally support the target.
             target_position = np.flatnonzero(

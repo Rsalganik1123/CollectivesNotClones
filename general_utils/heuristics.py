@@ -84,8 +84,7 @@ def generate_strategy_items_and_ratigns(params, rng, strategy, item_popularity, 
             budget,
             params.rating_max,
             dtype=float,
-        )
-        
+        )    
     if strategy == 'random_filler':
         candidate_items = np.delete(
             np.arange(params.n_items),
@@ -304,7 +303,30 @@ def generate_strategy_items_and_ratigns(params, rng, strategy, item_popularity, 
             params.rating_max,
             dtype=float,
         )
-    
+    if strategy == 'mainstream_mimic_no_target_item': 
+        candidate_items = np.delete(
+            np.arange(params.n_items),
+            params.target_item,
+        )
+
+        # Sort remaining items from most to least popular.
+        ranked_candidates = candidate_items[
+            np.argsort(
+                item_popularity[candidate_items]
+            )[::-1]
+        ]
+
+        most_popular_items = ranked_candidates[
+            :budget
+        ]
+
+        strategy_items = most_popular_items
+
+        strategy_ratings = np.full(
+            len(strategy_items),
+            params.rating_max,
+            dtype=float,
+        )
     return strategy_items, strategy_ratings
 
 def compute_strategy_vector(
