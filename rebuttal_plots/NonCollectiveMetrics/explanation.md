@@ -18,11 +18,11 @@ Below, we visualize the findings for the completely non-unified setting: $\beta=
 
 # Finding 3: Higher heterogeneity seems to improve the collective's success
 
-Below, we isolate for $\alpha=0.1, $\beta=1.0, \gamma=1$. Here, we vary the heterogeneity of the collective. We can see that as heterogeneity $\Sigma_C$ increases, so does the success over the non-collective. We hypothesize that greater dispersion increases the likelihood that the collective's strategic actions will influence the model to believe that the target item is more broadly liked, triggering popularity bias. We hope to investigate this hypothesis more concretely in the revised version of our camera ready. 
+Below, we isolate for $\alpha=0.1, \beta=1.0, \gamma=1$. Here, we vary the heterogeneity of the collective. We can see that as heterogeneity $\Sigma_C$ increases, so does the success over the non-collective. We hypothesize that greater dispersion increases the likelihood that the collective's strategic actions will influence the model to believe that the target item is more broadly liked, triggering popularity bias. We hope to investigate this hypothesis more concretely in the revised version of our camera ready. 
 ![Local Screenshot](vary_p0_alpha_0.1_beta_1.0_gamma_1.0_multi_metric.png)
 
 # Finding 4: Similarly to our findings calculating over the entire collective, it seems that greater coordination over the heuristic strategies decreases the performance. 
-Below, we vary $\beta$ in the setting where $\Sigma_C = \gamma = 0 and $\alpha=0.1$. We can see that while the target item and baselines remain relatively stable irrespective of coordination, the heuristics decrease in their influence over the non-collective members. 
+Below, we vary $\beta$ in the setting where $\Sigma_C = \gamma = 0$ and $\alpha=0.1$. We can see that while the target item and baselines remain relatively stable irrespective of coordination, the heuristics decrease in their influence over the non-collective members. 
 ![Local Screenshot](vary_beta_alpha_0.1_p0_0.0_gamma_0.0_multi_metric.png)
 
 
