@@ -13,8 +13,8 @@ We also present the results for a heterogeneous collective by setting $\alpha=0.
 For a more direct comparison with the plots in Figure 3(d) and 3(e) we present the following plots as well. 
 
 First, we showcase the setting where $\alpha=0.1, \Sigma_C = 0, \gamma=0.0$ and plotted the realized beta $\hat\beta$. This corresponds with figure 3(d). 
-![Local Screenshot](success_vs_realized_rating_realized_beta_alpha_0.1_p0_0.0_gamma_1.0.png)
-![Local Screenshot](success_vs_realized_rating_realized_beta_alpha_0.1_p0_0.0_gamma_1.0_all_strat.png)
+![Local Screenshot](success_vs_realized_rating_realized_beta_alpha_0.1_p0_0.0_gamma_0.0.png)
+![Local Screenshot](success_vs_realized_rating_realized_beta_alpha_0.1_p0_0.0_gamma_0.0_all_strat.png)
 
 Second, we showcase the setting where $\alpha=0.1, \Sigma_C = 1.0, \beta=1.0$ and plotted the realized beta $\hat\gamma$. This corresponds with figure 3(e).
 ![Local Screenshot](success_vs_realized_rating_realized_gamma_alpha_0.1_beta_1.0_p0_1.0.png)
