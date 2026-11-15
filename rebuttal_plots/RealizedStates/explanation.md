@@ -10,7 +10,7 @@ We also present the results for a heterogeneous collective by setting $\alpha=0.
 ![Local Screenshot](success_vs_realized_rating_alpha_0.1_p0_0.5.png)
 
 
-For a more direct comparison with the plots in Figure 3(d) and 3(e) we present the following plots as well. 
+For a more direct comparison with the plots in Figure 3(d) and 3(e) we present the following plots as well. Please note that in order to replicate the settings of the plots in Fig 3(e)/(d) we have to isolate for one "requested" and one "realized" variable. Thus, unlike the plots above which use exclusively the "realized" variables, for the plots below we index on a "requested" variable when selecting for the parameter setting that is not being represented by the x-axis.
 
 First, we showcase the setting where $\alpha=0.1, \Sigma_C = 0, \gamma=0.0$ and plotted the realized beta $\hat\beta$. This corresponds with figure 3(d). 
 ![Local Screenshot](success_vs_realized_rating_realized_beta_alpha_0.1_p0_0.0_gamma_0.0.png)
